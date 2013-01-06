@@ -76,7 +76,7 @@ def get_season_and_episode_number(season_episode_name):
 def get_file_name(file_name, file_extension):
     return file_name.split(file_extension)[0]
     
-class Sitcom:
+class TvSeries:
     def __init__(self, season_number, episode_number, file_name):
         self.episode_number = episode_number
         self.season_number = season_number
@@ -94,8 +94,9 @@ class Sitcom:
     def __repr__(self):
         return " Season number: " + str(self.season_number) + "Episode number: " + str(self.episode_number)  + " File name: " + str(self.file_name) + "\n"
         
-sitcom = []
-        
+tvSeries = []
+movies = []
+
 def create_list_of_video_names():
     print("Started creating list of video file names")
     
@@ -108,19 +109,19 @@ def create_list_of_video_names():
             continue
         
         match = re.search(r'([s0\w]+\w+\d)', file_name)
-        # sitcom
+        # tv series
         if match:
             season_and_episode_number = get_season_and_episode_number(match.group())
             file_name = get_file_name(file_name, file_extension)
             
-            sitcom.append(Sitcom(season_and_episode_number[0], season_and_episode_number[1], file_name))
+            tvSeries.append(TvSeries(season_and_episode_number[0], season_and_episode_number[1], file_name))
+            
         else: # movie
-            print("Not able to process yet" + file_name)
+            #print("Not able to process yet" + file_name)
+            file_name = get_file_name(file_name, file_extension)
+            movies.append(file_name)
     
-    print("Finished creating list of video file names")
-
-    print(sitcom)
-    
+    print("Finished creating list of video file names")    
 
 def process_subtitle_files():
     print("Started processing subtitle file names")
@@ -134,7 +135,7 @@ def process_subtitle_files():
             continue
         
         match = re.search(r'([Ss0\w]+\w+\d)', file_name)
-        # sitcom
+        # tvSeries
         if match:
             season_and_episode_number = get_season_and_episode_number(match.group())
             
@@ -142,7 +143,7 @@ def process_subtitle_files():
             episode_number = season_and_episode_number[1]
             #old_name = get_file_name(file_name, file_extension)
             
-            for each in sitcom:
+            for each in tvSeries:
                 if season_number == each.get_season_number() and episode_number == each.get_episode_number():
                     try:
                         new_name = each.get_file_name() + file_extension
@@ -151,13 +152,50 @@ def process_subtitle_files():
                         print("Not able to rename " + file_name)
             
         else: # movie
-            print("Not able to process yet" + file_name)
+            for movie_name in movies:
+                if movie_name in file_name:
+                    try:
+                        new_name = movie_name + file_extension
+                        os.rename(file_name, new_name)
+                    except OSError:
+                        print("Not able to rename " + file_name)
+            
             
         print("Finished processing subtitle file names")
 
 def process_files():
     create_list_of_video_names()
     process_subtitle_files()
+
+def get_simplified_file_name(file_name, to_remove):
+    to_replace = [".", "_"]
+    
+    file_extension = get_file_extension(file_name)
+    file_name = file_name.split(to_remove)[0]
+    
+    for character in to_replace:
+        if character in file_name:
+            file_name = file_name.replace(character, " ")
+            file_name = file_name[:-1]
+    
+    file_name += file_extension
+    return file_name
+                
+def simplify_file_names():
+    to_remove_from_file_name = ["HDTV", "DVDRip", "720p", "en", "xvid"]
+    
+    for file_name in os.listdir(os.getcwd()):
+        if os.path.isdir(file_name):
+            continue
+        
+        for to_remove in to_remove_from_file_name:
+            if to_remove in file_name:
+                new_file_name = get_simplified_file_name(file_name, to_remove)
+                
+                try:
+                    os.rename(file_name, new_file_name)
+                except OSError:
+                    print("Could not rename file " + file_name)
 
 if __name__ == '__main__':
     absolute_path = raw_input("Enter absolute path of the directory: ")
@@ -166,6 +204,7 @@ if __name__ == '__main__':
     try:
         os.chdir(absolute_path)
         remove_unrelated_files()
+        simplify_file_names()
         process_files()            
     except OSError:
         print("Exception while changing to directory: " + absolute_path)
