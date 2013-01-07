@@ -1,17 +1,6 @@
 import os
 import re
 
-# Features:
-# 1- Removing all unrelated files from the directory with video and subtitle files
-##
-# 2- Renaming subtitle files with the matching video file name
-#    2.1- Video files may be TV series. In this case the file name contains season number and episode number.
-#         In this case most common naming formats are either dot (30.Rock.S07E06.HDTV.x264-LOL) or 
-#         hyphen (30 Rock - 07x08 - My Whole Life Is Thunder.LOL) separated.
-#
-#    2.2- Video files may be movies. Movies may be composed of one of multiple parts.
-
-
 #TODO list
 # 1- Recursive progress if subfolders are present
 #
