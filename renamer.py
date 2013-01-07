@@ -5,7 +5,7 @@ import re
 # 1- Removing all unrelated files from the directory with video and subtitle files
 ##
 # 2- Renaming subtitle files with the matching video file name
-#    2.1- Video files may be sitcoms. In this case the file name contains season number and episode number.
+#    2.1- Video files may be TV series. In this case the file name contains season number and episode number.
 #         In this case most common naming formats are either dot (30.Rock.S07E06.HDTV.x264-LOL) or 
 #         hyphen (30 Rock - 07x08 - My Whole Life Is Thunder.LOL) separated.
 #
@@ -67,9 +67,17 @@ def get_season_and_episode_number(season_episode_name):
             
             season_number = temp[0]
             episode_number = temp[1]
+            
+            if "s" in season_number.lower():
+                season_number = season_number[1:]
+        
+            if season_number[0] == "0":
+                season_number = season_number[1:]
+                
+            if episode_number[0] == "0":
+                episode_number = episode_number[1:]
     
-    if "s" in season_number.lower():
-        season_number = season_number[1:]
+
     
     return season_number, episode_number
 
@@ -182,7 +190,7 @@ def get_simplified_file_name(file_name, to_remove):
     return file_name
                 
 def simplify_file_names():
-    to_remove_from_file_name = ["HDTV", "DVDRip", "720p", "en", "xvid"]
+    to_remove_from_file_name = ["HDTV", "DVDRip", "720p", ".en", "xvid"]
     
     for file_name in os.listdir(os.getcwd()):
         if os.path.isdir(file_name):
@@ -198,7 +206,7 @@ def simplify_file_names():
                     print("Could not rename file " + file_name)
 
 if __name__ == '__main__':
-    absolute_path = raw_input("Enter absolute path of the directory: ")
+    absolute_path = input("Enter absolute path of the directory: ")
     print ("Entered path: " + absolute_path)
 
     try:
