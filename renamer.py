@@ -131,6 +131,20 @@ def create_list_of_video_names():
     
     print("Finished creating list of video file names")    
 
+def remove_not_renamed_subtitles(file_to_remove):
+    try:
+        os.remove(file_to_remove)
+    except OSError:
+        print("Could not remove " + file_to_remove)
+
+def rename_subtitle_file(file_name, new_file_name):
+    try:
+        os.rename(file_name, new_file_name)
+    except OSError:
+        print("Not able to rename " + file_name + " to ", new_file_name)
+        print("Removing file...")
+        remove_not_renamed_subtitles(file_name)
+        
 def process_subtitle_files():
     print("Started processing subtitle file names")
     
@@ -153,57 +167,64 @@ def process_subtitle_files():
             
             for each in tvSeries:
                 if season_number == each.get_season_number() and episode_number == each.get_episode_number():
-                    try:
-                        new_name = each.get_file_name() + file_extension
-                        os.rename(file_name, new_name)
-                    except OSError:
-                        print("Not able to rename " + file_name)
+                    new_name = each.get_file_name() + file_extension
+                    rename_subtitle_file(file_name, new_name)
+                    break
             
         else: # movie
             for movie_name in movies:
                 if movie_name in file_name:
-                    try:
-                        new_name = movie_name + file_extension
-                        os.rename(file_name, new_name)
-                    except OSError:
-                        print("Not able to rename " + file_name)
-            
-            
-        print("Finished processing subtitle file names")
+                    new_name = movie_name + file_extension
+                    rename_subtitle_file(file_name, new_name)
+                    break
+                
+    print("Finished processing subtitle file names")
 
 def process_files():
     create_list_of_video_names()
     process_subtitle_files()
 
-def get_simplified_file_name(file_name, to_remove):
-    to_replace = [".", "_"]
-    
+def remove_unwanted_characters(file_name):
     file_extension = get_file_extension(file_name)
-    file_name = file_name.split(to_remove)[0]
+    file_name = file_name.split(file_extension)[0]  
+    to_replace = [".", "_"]
     
     for character in to_replace:
         if character in file_name:
             file_name = file_name.replace(character, " ")
             file_name = file_name[:-1]
-    
+            
+    file_name += file_extension
+    return file_name
+
+def get_simplified_file_name(file_name, to_remove):
+    file_extension = get_file_extension(file_name)
+    file_name = file_name.split(to_remove)[0]    
     file_name += file_extension
     return file_name
                 
 def simplify_file_names():
-    to_remove_from_file_name = ["HDTV", "DVDRip", "720p", ".en", "xvid"]
+    to_remove_from_file_name = ["HDTV","UNCUT" ,"DVDRip", "720p", ".en", "xvid"]
     
     for file_name in os.listdir(os.getcwd()):
         if os.path.isdir(file_name):
             continue
         
         for to_remove in to_remove_from_file_name:
+            new_file_name = file_name
+            
             if to_remove in file_name:
                 new_file_name = get_simplified_file_name(file_name, to_remove)
-                
+            
+            new_file_name = remove_unwanted_characters(new_file_name)
+            
+            if file_name != new_file_name:
                 try:
                     os.rename(file_name, new_file_name)
                 except OSError:
-                    print("Could not rename file " + file_name)
+                    print("Could not rename file " + file_name + " to ", new_file_name)
+            else:
+                print("No need to rename " + file_name)
 
 if __name__ == '__main__':
     absolute_path = input("Enter absolute path of the directory: ")
@@ -213,7 +234,8 @@ if __name__ == '__main__':
         os.chdir(absolute_path)
         remove_unrelated_files()
         simplify_file_names()
-        process_files()            
+        process_files()
+              
     except OSError:
         print("Exception while changing to directory: " + absolute_path)
         print("Script will not continue")
